@@ -1,0 +1,79 @@
+name: Refresh RBA Tracker
+
+# Cron is UTC. Australian eastern time is UTC+10 (AEST) or UTC+11 (AEDT, Oct-Apr).
+#
+# Daily runs keep the cash rate, rate-path chart and AUD/USD current.
+# The afternoon weekday run lands after any RBA announcement (always 14:30
+# local on a weekday), so no meeting dates need hardcoding here.
+#
+# NOTE: GitHub disables scheduled workflows after 60 days with no repository
+# activity. The keepalive job below commits a heartbeat file monthly so the
+# schedule never silently switches itself off.
+
+on:
+  schedule:
+    - cron: "0 21 * * *"    # 07:00 AEST daily  - morning refresh
+    - cron: "30 5 * * 1-5"  # 15:30 AEST weekdays - lands after any decision
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # rebuild.py is standard library only - nothing to install
+
+      - name: Build dashboard
+        run: python3 rebuild.py
+
+      - name: Verify build produced a usable page
+        run: |
+          test -s index.html || { echo "index.html missing or empty"; exit 1; }
+          if grep -q '{{' index.html; then
+            echo "ERROR: unsubstituted template tokens remain:"
+            grep -o '{{[A-Z_]*}}' index.html | sort -u
+            exit 1
+          fi
+          echo "index.html OK ($(wc -c < index.html) bytes)"
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No change."
+          else
+            git commit -m "auto: refresh $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
+
+  keepalive:
+    # Runs on the 1st of each month. Commits a timestamp so the repo is never
+    # inactive for 60 days, which is what causes GitHub to disable the cron.
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Heartbeat
+        run: |
+          if [ "$(date -u +%d)" != "01" ]; then
+            echo "Not the 1st - skipping heartbeat."
+            exit 0
+          fi
+          date -u '+%Y-%m-%dT%H:%M:%SZ' > .keepalive
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .keepalive
+          git diff --cached --quiet || {
+            git commit -m "chore: keepalive $(date -u '+%Y-%m')"
+            git push
+          }
