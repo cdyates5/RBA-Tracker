@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RBA Policy Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --paper:#F7F7F4;
+    --card:#FFFFFF;
+    --ink:#13283F;          /* RBA navy */
+    --ink-soft:#4C5E72;
+    --line:#DCDFD9;
+    --gold:#B8860B;          /* wattle */
+    --hike:#A8431F;          /* ochre */
+    --hike-bg:#F6E7E0;
+    --cut:#3E6B4F;           /* eucalypt */
+    --cut-bg:#E5EEE7;
+    --hold:#5A6B7E;
+    --hold-bg:#E8ECF0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:15px;
+    line-height:1.5;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px 64px}
+
+  /* ---------- masthead ---------- */
+  header{
+    border-bottom:3px double var(--ink);
+    padding:28px 0 18px;
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;
+  }
+  .masthead h1{
+    font-family:'Spectral',serif;font-weight:700;font-size:30px;letter-spacing:-0.01em;
+  }
+  .masthead .sub{color:var(--ink-soft);font-size:13px;margin-top:2px}
+  .stamp{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);
+    text-align:right;line-height:1.7;
+  }
+  .stamp b{color:var(--ink);font-weight:600}
+
+  /* ---------- hero ---------- */
+  .hero{
+    display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:0;
+    border:1px solid var(--line);background:var(--card);margin-top:28px;
+  }
+  .hero-rate{
+    padding:30px 32px;border-right:1px solid var(--line);
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;
+    text-transform:uppercase;color:var(--gold);font-weight:600;
+  }
+  .big-rate{
+    font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:78px;
+    letter-spacing:-0.04em;line-height:1.05;margin:6px 0 4px;
+  }
+  .big-rate span{font-size:34px;color:var(--ink-soft);font-weight:500}
+  .rate-meta{font-size:13px;color:var(--ink-soft)}
+  .pill{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+    padding:3px 10px;border-radius:3px;margin-top:12px;width:fit-content;
+  }
+  .pill.hike{background:var(--hike-bg);color:var(--hike)}
+  .hero-next{padding:30px 32px;display:flex;flex-direction:column;justify-content:center}
+  .next-row{display:flex;gap:40px;flex-wrap:wrap;margin-top:10px}
+  .countdown{display:flex;gap:18px;margin-top:14px}
+  .cd-unit{font-family:'IBM Plex Mono',monospace;text-align:center}
+  .cd-unit .num{font-size:34px;font-weight:600;line-height:1.1}
+  .cd-unit .lab{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-soft)}
+  .next-fact{font-size:13px;color:var(--ink-soft)}
+  .next-fact b{color:var(--ink);font-weight:600}
+
+  /* ---------- sections ---------- */
+  section{margin-top:44px}
+  .sec-head{
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:18px;flex-wrap:wrap;
+  }
+  .sec-head h2{font-family:'Spectral',serif;font-weight:600;font-size:21px}
+  .sec-head .note{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft)}
+
+  .chart-card{background:var(--card);border:1px solid var(--line);padding:22px 22px 14px}
+  .chart-card .chart-wrap{position:relative;height:320px}
+
+  /* ---------- meeting rail ---------- */
+  .meetings{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .meeting{
+    background:var(--card);border:1px solid var(--line);padding:14px 16px 16px;position:relative;
+  }
+  .meeting.next{border:1.5px solid var(--gold)}
+  .meeting .date{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600}
+  .meeting .somp{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);
+    border:1px solid var(--gold);border-radius:3px;padding:0 5px;margin-left:6px;
+  }
+  .meeting .outcome{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;margin-top:8px}
+  .meeting .outcome.hike{color:var(--hike)}
+  .meeting .outcome.pending{color:var(--ink-soft);font-weight:500}
+  .meeting .desc{font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .votes{display:flex;gap:4px;margin-top:10px}
+  .votes .dot{width:9px;height:9px;border-radius:50%}
+  .dot.for{background:var(--hike)}
+  .dot.against{background:none;border:1.5px solid var(--ink-soft)}
+  .vote-lab{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);margin-top:5px}
+
+  /* ---------- indicators ---------- */
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .ind{background:var(--card);border:1px solid var(--line);padding:16px 18px}
+  .ind .lab{font-size:12px;color:var(--ink-soft)}
+  .ind .val{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;margin-top:4px}
+  .ind .ctx{font-size:12px;color:var(--ink-soft);margin-top:4px}
+  .ind .val .warn{color:var(--hike)}
+
+  /* ---------- market pricing table ---------- */
+  .pricing{background:var(--card);border:1px solid var(--line);overflow-x:auto}
+  table.px{width:100%;border-collapse:collapse;min-width:640px}
+  table.px th{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:600;text-align:left;padding:12px 16px;border-bottom:1px solid var(--ink);
+  }
+  table.px td{padding:11px 16px;border-bottom:1px dashed var(--line);font-size:13.5px;vertical-align:middle}
+  table.px tr:last-child td{border-bottom:none}
+  table.px tr.next-mtg{background:#FBF6E9}
+  td.mono{font-family:'IBM Plex Mono',monospace;font-weight:500}
+  td.mono b{font-weight:600}
+  .chg{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:2px 8px;border-radius:3px;white-space:nowrap}
+  .chg.up{background:var(--hike-bg);color:var(--hike)}
+  .chg.flat{background:var(--hold-bg);color:var(--hold)}
+  .px-bar{display:inline-block;height:8px;background:var(--hike);border-radius:4px;vertical-align:middle;margin-right:8px;opacity:0.85}
+  .px-bar.zero{background:var(--hold);opacity:0.35}
+  .px-note{font-size:12px;color:var(--ink-soft);padding:12px 16px;border-top:1px solid var(--line);line-height:1.6}
+
+  /* ---------- bank forecasts ---------- */
+  .banks{background:var(--card);border:1px solid var(--line);padding:22px}
+  .bank-row{display:grid;grid-template-columns:90px 1fr 150px;align-items:center;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line)}
+  .bank-row:last-child{border-bottom:none}
+  .bank-name{font-weight:600;font-size:14px}
+  .bar-track{position:relative;height:10px;background:var(--hold-bg);border-radius:5px}
+  .bar-fill{position:absolute;left:0;top:0;height:10px;border-radius:5px;background:var(--ink)}
+  .bar-fill.above{background:var(--hike)}
+  .bank-call{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right}
+  .bank-call small{display:block;font-size:11px;color:var(--ink-soft)}
+
+  /* ---------- board sentiment ---------- */
+  .sentiment-header{display:grid;grid-template-columns:1fr 400px;gap:20px;align-items:start;margin-bottom:20px}
+  .sentiment-score-wrap{background:var(--card);border:1px solid var(--line);padding:22px 26px}
+  .score-row{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+  .score-dial{font-family:'IBM Plex Mono',monospace;font-size:54px;font-weight:600;line-height:1;letter-spacing:-0.04em;color:var(--hike)}
+  .score-label{font-size:21px;font-weight:600;font-family:'Spectral',serif}
+  .score-sub{font-size:12px;color:var(--ink-soft);margin-bottom:8px}
+  .score-bar-wrap{position:relative;height:14px;background:linear-gradient(to right,var(--cut),#A5C1AD 25%,#E8ECF0 45%,#E8ECF0 55%,#E8C9B0 75%,var(--hike));border-radius:4px}
+  .score-needle{position:absolute;top:-5px;width:4px;height:24px;background:var(--ink);border-radius:2px;transform:translateX(-50%)}
+  .score-axis{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);margin-top:4px}
+  .score-dist{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+  .sd-item{display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:12px}
+  .sd-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .members{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .member{background:var(--card);border:1px solid var(--line);padding:14px 16px 12px}
+  .member-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .member .nm{font-weight:600;font-size:14px}
+  .member .rl{font-size:11px;color:var(--ink-soft);margin-top:1px}
+  .member .view{font-size:12px;color:var(--ink-soft);margin-top:7px;line-height:1.45}
+  .member .src{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);margin-top:5px;opacity:0.7}
+  .hawk-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;white-space:nowrap;align-self:flex-start;flex-shrink:0}
+  .hawk-badge.H{background:var(--hike-bg);color:var(--hike)}
+  .hawk-badge.H2{background:#FAEBD7;color:#8B4513}
+  .hawk-badge.N{background:var(--hold-bg);color:var(--hold)}
+  .hawk-badge.D{background:var(--cut-bg);color:var(--cut)}
+  .hawk-badge.UK{background:#F0F0F0;color:#888}
+  @media(max-width:840px){
+    .sentiment-header{grid-template-columns:1fr}
+    .members{grid-template-columns:1fr}
+  }
+
+  footer{
+    margin-top:48px;border-top:1px solid var(--line);padding-top:14px;
+    font-size:12px;color:var(--ink-soft);line-height:1.7;
+  }
+
+  @media(max-width:840px){
+    .hero{grid-template-columns:1fr}
+    .hero-rate{border-right:none;border-bottom:1px solid var(--line)}
+    .meetings{grid-template-columns:repeat(2,1fr)}
+    .grid-4{grid-template-columns:repeat(2,1fr)}
+    .board{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:520px){
+    .big-rate{font-size:58px}
+    .board{grid-template-columns:1fr}
+    .bank-row{grid-template-columns:70px 1fr 120px}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="masthead">
+      <h1>RBA Policy Tracker</h1>
+      <div class="sub">Reserve Bank of Australia &middot; Monetary Policy Board &middot; Cash rate target</div>
+    </div>
+    <div class="stamp">
+      Mandate: trimmed mean CPI <b>2&ndash;3%</b> + full employment<br>
+      Governor: <b>Michele Bullock</b> &middot; Meetings: <b>8 / yr</b><br>
+      <span id="now-aest"></span>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-rate">
+      <div class="eyebrow">Current cash rate target</div>
+      <div class="big-rate">4.35<span>%</span></div>
+      <div class="rate-meta">Effective 6 May 2026 &middot; second consecutive hold</div>
+      <div class="pill hike">&#9644; no change &middot; 11 Aug 2026 &middot; unanimous</div>
+    </div>
+    <div class="hero-next">
+      <div class="eyebrow">Next decision</div>
+      <div class="next-row">
+        <div>
+          <div style="font-family:'Spectral',serif;font-size:22px;font-weight:600;margin-top:6px">Tue 29 Sep 2026</div>
+          <div class="next-fact">2:30 pm AEST &middot; presser 3:30 pm</div>
+          <div class="countdown" id="countdown">
+            <div class="cd-unit"><div class="num" id="cd-d">--</div><div class="lab">days</div></div>
+            <div class="cd-unit"><div class="num" id="cd-h">--</div><div class="lab">hrs</div></div>
+            <div class="cd-unit"><div class="num" id="cd-m">--</div><div class="lab">min</div></div>
+            <div class="cd-unit"><div class="num" id="cd-s">--</div><div class="lab">sec</div></div>
+          </div>
+        </div>
+        <div style="align-self:center;max-width:330px">
+          <div class="next-fact" style="margin-bottom:6px"><b>The setup:</b> Board held unanimously in August with the hike bias explicitly retained. June-quarter CPI undershot at 3.8% headline / 3.6% trimmed mean, which shifted consensus firmly to a hold. Bullock says the Board is not ruling out further rises if inflation looks like staying above target for longer than forecast.</div>
+          <div class="next-fact">CBA expects on hold through 2026. Fuel excise roll-off is expected to lift September-quarter headline inflation.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <section>
+    <div class="sec-head">
+      <h2>Cash rate target path</h2>
+      <div class="note">Nov 2020 &rarr; present &middot; step at effective date</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-wrap"><canvas id="rateChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- SENTIMENT HISTORY CHART -->
+  <section>
+    <div class="sec-head">
+      <h2>Board sentiment vs cash rate</h2>
+      <div class="note">sentiment score reconstructed from minutes, statements &amp; vote record &middot; Jan 2000 &rarr; present &middot; scale −10 (dove) to +10 (hawk)</div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-wrap" style="height:380px"><canvas id="sentChart"></canvas></div>
+    </div>
+    <div style="font-size:12px;color:var(--ink-soft);padding:10px 22px 14px;background:var(--card);border:1px solid var(--line);border-top:none;line-height:1.65">
+      Sentiment scores are an editorial reconstruction (Jan 2000 – Jun 2026) synthesised from RBA statements, minutes language, Governor/Deputy speech tone, and (from Mar 2025) individual member vote splits. Key inflection labels shown. Pre-2025 scores reflect the former Reserve Bank Board structure under a single Governor-led communication style with no published individual vote splits. The five major regime cycles — dot-com/GST tightening (2000), GFC shock pivot (2008), record-low era (2020–21), post-COVID inflation surge (2022–23), and the 2026 re-tightening — are each visible in both series.
+    </div>
+  </section>
+
+  <!-- 2026 MEETINGS -->
+  <section>
+    <div class="sec-head">
+      <h2>2026 meeting calendar</h2>
+      <div class="note">SoMP = Statement on Monetary Policy released &middot; dots = board votes for / against</div>
+    </div>
+    <div class="meetings" id="meetingRail"></div>
+  </section>
+
+  <!-- INDICATORS -->
+  <section>
+    <div class="sec-head">
+      <h2>What the Board is watching</h2>
+      <div class="note">latest prints &amp; RBA forecasts</div>
+    </div>
+    <div class="grid-4">
+      <div class="ind">
+        <div class="lab">Headline CPI (Jun qtr, y/y)</div>
+        <div class="val"><span class="warn">3.8%</span></div>
+        <div class="ctx">vs 2-3% target band &middot; peaked in Jun qtr per Aug SoMP</div>
+      </div>
+      <div class="ind">
+        <div class="lab">Trimmed mean (Jun qtr, y/y)</div>
+        <div class="val"><span class="warn">3.6%</span></div>
+        <div class="ctx">little changed from Mar qtr &middot; back to target early 2027</div>
+      </div>
+      <div class="ind">
+        <div class="lab">Unemployment rate</div>
+        <div class="val">4.1%</div>
+        <div class="ctx">RBA f/c rising to 4.8% by end-2028</div>
+      </div>
+      <div class="ind">
+        <div class="lab">AUD / USD</div>
+        <div class="val">n/a</div>
+        <div class="ctx">fetched live &middot; unavailable</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKET PRICING -->
+  <section>
+    <div class="sec-head">
+      <h2>Market pricing &mdash; next 12 months</h2>
+      <div class="note">ASX 30-day interbank cash rate futures &middot; implied path vs 4.35%</div>
+    </div>
+    <div class="pricing">
+      <table class="px">
+        <thead>
+          <tr>
+            <th>Meeting</th>
+            <th>Implied cash rate</th>
+            <th>Cumulative vs current</th>
+            <th>What's priced</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="next-mtg">
+            <td class="mono"><b>29 Sep 2026</b></td>
+            <td class="mono">~4.35%</td>
+            <td><span class="chg flat">±0 bp</span></td>
+            <td><span class="px-bar zero" style="width:10px"></span>Hold strongly priced</td>
+          </tr>
+          <tr>
+            <td class="mono">3 Nov 2026</td>
+            <td class="mono">~4.35%</td>
+            <td><span class="chg flat">±0 bp</span></td>
+            <td><span class="px-bar zero" style="width:12px"></span>Hold priced; SoMP forecast round is the swing factor</td>
+          </tr>
+          <tr>
+            <td class="mono">8 Dec 2026</td>
+            <td class="mono">~4.37%</td>
+            <td><span class="chg up">+2 bp</span></td>
+            <td><span class="px-bar" style="width:16px"></span>Small residual hike risk into year end</td>
+          </tr>
+          <tr>
+            <td class="mono">Feb 2027*</td>
+            <td class="mono">~4.40%</td>
+            <td><span class="chg up">+5 bp</span></td>
+            <td><span class="px-bar" style="width:22px"></span>Curve broadly flat; no cuts priced</td>
+          </tr>
+          <tr>
+            <td class="mono">Mid 2027*</td>
+            <td class="mono">~4.30%</td>
+            <td><span class="chg flat">-5 bp</span></td>
+            <td><span class="px-bar zero" style="width:14px"></span>First tentative easing priced as CPI returns to band</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="px-note">
+        Implied rates from the ASX 30-day interbank futures curve as at <b>15 May 2026</b>; intermediate meeting values interpolated from the curve's profile (front end at 4.35%, rising to ~4.65&ndash;4.75% by late 2026, flattening into 2027 &asymp; ~60 bp total tightening priced). Early-June pricing has since <b>pared the path modestly</b>: a June hold is now strongly priced with only a modest chance of one further hike in 2026, so treat the back-half figures as an upper bound. *2027 meeting dates not yet published. Futures reference the overnight cash rate (AONIA), which can trade marginally off target. Indicative only &mdash; refresh from the ASX RBA Rate Tracker before each meeting.
+      </div>
+    </div>
+  </section>
+
+  <!-- BANK FORECASTS -->
+  <section>
+    <div class="sec-head">
+      <h2>Big 4 terminal rate calls</h2>
+      <div class="note">current cycle peak &middot; cash rate now 4.35%</div>
+    </div>
+    <div class="banks" id="bankRows"></div>
+  </section>
+
+  <!-- BOARD SENTIMENT -->
+  <section>
+    <div class="sec-head">
+      <h2>Board sentiment &amp; member views</h2>
+      <div class="note">editorial content as of 11 Aug 2026</div>
+    </div>
+
+    <div class="sentiment-header">
+      <!-- member cards -->
+      <div class="members" id="memberCards"></div>
+
+      <!-- composite score panel -->
+      <div class="sentiment-score-wrap">
+        <div class="eyebrow" style="margin-bottom:8px">Composite sentiment score</div>
+        <div class="score-row">
+          <div class="score-dial" id="scoreNum">+2.4</div>
+          <div>
+            <div class="score-label" id="scoreLabel">Lean Hawkish</div>
+            <div class="score-sub">out of &plusmn;10 &middot; weighted by role</div>
+          </div>
+        </div>
+        <div class="score-sub" style="margin-bottom:4px">Scale: Dove (−10) &rarr; Neutral (0) &rarr; Hawk (+10)</div>
+        <div class="score-bar-wrap">
+          <div class="score-needle" id="scoreNeedle"></div>
+        </div>
+        <div class="score-axis"><span>Dove</span><span>Neutral</span><span>Hawk</span></div>
+        <div class="score-dist" id="scoreDist"></div>
+        <div style="font-size:11px;color:var(--ink-soft);margin-top:10px;line-height:1.55">Scores are editorial judgements synthesised from public speeches, press conference remarks, vote history, and published research. Members with no public signal are scored at neutral (0). Score is re-weighted by institutional role: Governor &times;2.0, Deputy Governor &times;1.5, Treasury Secretary &times;1.0, external members &times;1.0.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Auto-refreshed 9 Sep 2026, 11:53 (AEST). Cash rate and rate path fetched live from RBA statistical table F1.1. AUD/USD fetched live. Meeting outcomes, board member views, sentiment scores, market pricing and bank forecasts are editorial and maintained by hand — see the as-of date above the board section.</footer>
+</div>
+
+<script>
+/* ---------- countdown to 16 June 2026 2:30pm AEST (UTC+10) ---------- */
+const target = new Date('2026-09-29T14:30:00+10:00').getTime();
+function tick(){
+  let d = target - Date.now();
+  if(d < 0) d = 0;
+  const dd = Math.floor(d/86400000), hh = Math.floor(d%86400000/3600000),
+        mm = Math.floor(d%3600000/60000), ss = Math.floor(d%60000/1000);
+  document.getElementById('cd-d').textContent = dd;
+  document.getElementById('cd-h').textContent = String(hh).padStart(2,'0');
+  document.getElementById('cd-m').textContent = String(mm).padStart(2,'0');
+  document.getElementById('cd-s').textContent = String(ss).padStart(2,'0');
+}
+tick(); setInterval(tick,1000);
+document.getElementById('now-aest').textContent =
+  new Intl.DateTimeFormat('en-AU',{dateStyle:'medium',timeStyle:'short',timeZone:'Australia/Sydney'}).format(new Date()) + ' AEST';
+
+/* ---------- meeting rail ---------- */
+const meetings = [{"date": "2\u20133 Feb", "somp": true, "outcome": "+25 bp \u2192 3.85%", "cls": "hike", "desc": "First hike since Nov 2023; unanimous", "votes": null}, {"date": "16\u201317 Mar", "somp": false, "outcome": "+25 bp \u2192 4.10%", "cls": "hike", "desc": "Fuel shock cited; dissenters held in a hawkish sense", "votes": [5, 4]}, {"date": "4\u20135 May", "somp": true, "outcome": "+25 bp \u2192 4.35%", "cls": "hike", "desc": "\u201cScope to pause\u201d signalled", "votes": [8, 1]}, {"date": "15\u201316 Jun", "somp": false, "outcome": "Hold 4.35%", "cls": "hold", "desc": "Pause begins after three hikes", "votes": null}, {"date": "10\u201311 Aug", "somp": true, "outcome": "Hold 4.35%", "cls": "hold", "desc": "Unanimous; hike bias retained; Harper's last meeting", "votes": [9, 0]}, {"date": "28\u201329 Sep", "somp": false, "outcome": "Pending", "cls": "pending", "desc": "Live \u2014 Sep qtr CPI not yet in hand", "votes": null, "next": true}, {"date": "2\u20133 Nov", "somp": true, "outcome": "\u2014", "cls": "pending", "desc": "SoMP meeting; full forecast round", "votes": null}, {"date": "7\u20138 Dec", "somp": false, "outcome": "\u2014", "cls": "pending", "desc": "Final meeting of 2026", "votes": null}];
+document.getElementById('meetingRail').innerHTML = meetings.map(m => `
+  <div class="meeting${m.next?' next':''}">
+    <span class="date">${m.date}</span>${m.somp?'<span class="somp">SoMP</span>':''}
+    <div class="outcome ${m.cls}">${m.outcome}</div>
+    <div class="desc">${m.desc}</div>
+    ${m.votes ? `<div class="votes">${'<span class="dot for"></span>'.repeat(m.votes[0])}${'<span class="dot against"></span>'.repeat(m.votes[1])}</div><div class="vote-lab">${m.votes[0]}\u2013${m.votes[1]} for hike</div>` : ''}
+  </div>`).join('');
+
+/* ---------- bank forecast bars (scaled 4.0% - 5.0%) ---------- */
+const banks = [{"name": "ANZ", "rate": 4.35, "call": "On hold through 2026"}, {"name": "CBA", "rate": 4.35, "call": "On hold through 2026"}, {"name": "NAB", "rate": 4.35, "call": "Hold; hike risk if CPI turns"}, {"name": "Westpac", "rate": 4.35, "call": "Hold; earlier hike calls dropped"}];
+const lo=4.0, hi=5.0;
+document.getElementById('bankRows').innerHTML = banks.map(b => `
+  <div class="bank-row">
+    <div class="bank-name">${b.name}</div>
+    <div class="bar-track"><div class="bar-fill${b.rate>4.35?' above':''}" style="width:${((b.rate-lo)/(hi-lo)*100).toFixed(1)}%"></div></div>
+    <div class="bank-call">${b.rate.toFixed(2)}%<small>${b.call}</small></div>
+  </div>`).join('');
+
+/* ---------- cash rate step chart ---------- */
+const path = [["1999-11-03",5.0],["2000-02-02",5.25],["2000-03-01",5.5],["2000-05-03",5.75],["2000-08-02",6.0],["2000-10-04",6.25],["2001-02-07",6.0],["2001-03-07",5.75],["2001-04-04",5.5],["2001-05-02",5.0],["2001-07-04",4.5],["2001-09-05",4.25],["2002-06-05",4.5],["2002-11-06",4.75],["2003-11-05",5.0],["2003-12-03",5.25],["2005-03-02",5.5],["2006-05-03",5.75],["2006-08-02",6.0],["2006-11-08",6.25],["2007-02-07",6.5],["2007-08-08",6.75],["2008-02-05",7.0],["2008-03-04",7.25],["2008-09-03",7.0],["2008-10-07",6.0],["2008-11-04",5.25],["2008-12-02",4.25],["2009-02-03",3.25],["2009-03-03",3.0],["2009-10-06",3.25],["2009-11-03",3.5],["2009-12-01",3.75],["2010-03-02",4.0],["2010-04-06",4.25],["2010-05-04",4.5],["2010-11-02",4.75],["2011-11-01",4.5],["2011-12-06",4.25],["2012-05-01",3.75],["2012-06-05",3.5],["2012-10-02",3.25],["2012-12-04",3.0],["2013-05-07",2.75],["2013-08-06",2.5],["2015-02-03",2.25],["2015-05-05",2.0],["2016-05-03",1.75],["2016-08-02",1.5],["2019-06-04",1.25],["2019-07-02",1.0],["2019-10-01",0.75],["2020-03-03",0.5],["2020-03-19",0.25],["2020-11-03",0.1],["2022-05-03",0.35],["2022-06-07",0.85],["2022-07-05",1.35],["2022-08-02",1.85],["2022-09-06",2.35],["2022-10-04",2.6],["2022-11-01",2.85],["2022-12-06",3.1],["2023-02-07",3.35],["2023-03-07",3.6],["2023-05-02",3.85],["2023-06-06",4.1],["2023-11-07",4.35],["2025-02-18",4.1],["2025-05-20",3.85],["2025-08-12",3.6],["2026-02-04",3.85],["2026-03-18",4.1],["2026-05-06",4.35]];
+const css = getComputedStyle(document.documentElement);
+const ink = css.getPropertyValue('--ink').trim();
+const hikeC = css.getPropertyValue('--hike').trim();
+const softC = css.getPropertyValue('--ink-soft').trim();
+
+try{ new Chart(document.getElementById('rateChart'),{
+  type:'line',
+  data:{
+    labels: path.map(p=>p[0]),
+    datasets:[{
+      data: path.map(p=>p[1]),
+      stepped:'before',
+      borderColor: ink,
+      borderWidth: 2,
+      pointRadius: path.map((p,i)=> i>=path.length-4 && i<path.length-1 ? 4 : 0),
+      pointBackgroundColor: hikeC,
+      pointBorderColor: hikeC,
+      fill:{target:'origin', above:'rgba(19,40,63,0.05)'}
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        callbacks:{
+          title: items => new Date(items[0].label).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}),
+          label: item => ' Cash rate target: ' + item.parsed.y.toFixed(2) + '%'
+        },
+        backgroundColor: ink, titleFont:{family:'IBM Plex Mono'}, bodyFont:{family:'IBM Plex Mono'}
+      }
+    },
+    scales:{
+      x:{
+        type:'category',
+        ticks:{
+          font:{family:'IBM Plex Mono',size:11}, color: softC, maxRotation:0, autoSkip:false,
+          callback:function(v,i){
+            const yr = this.getLabelForValue(v).slice(0,4);
+            const prev = i>0 ? this.getLabelForValue(v-1).slice(0,4) : '';
+            return yr!==prev ? yr : '';
+          }
+        },
+        grid:{display:false}
+      },
+      y:{
+        min:0, max:5,
+        ticks:{font:{family:'IBM Plex Mono',size:11}, color: softC, callback:v=>v.toFixed(1)+'%'},
+        grid:{color:'rgba(19,40,63,0.07)'}
+      }
+    }
+  }
+}); }catch(e){ console.warn('rate chart unavailable:', e); }
+
+/* ---------- sentiment history chart ---------- */
+/*
+  Reconstructed from: official statement language, Governor press conference tone,
+  minutes phrasing, vote splits (published from Mar 2025 transparency reform),
+  and policy action direction. Scale: −10 (full dove) to +10 (full hawk).
+  Sentiment methodology for the extended 2000–2026 period:
+  – 2000–2024 (pre-transparency reform): single institutional tone score derived from
+    statement language, Governor speeches, and direction/pace of policy moves.
+  – 2025+: weighted composite (Governor ×2, Deputy ×1.5, others ×1).
+  Key macro regimes:
+  2000: tightening into dotcom/GST shock (4 hikes to 6.25%) → hawk
+  2001: rapid easing post-dotcom/Sep11 (6 cuts to 4.25%) → dove
+  2002-07: mining boom tightening cycle (4.25%→7.25%) → hawk
+  2008: GFC emergency cuts (7.25%→4.25%) → pivot from hawk to deep dove
+  2009-10: GFC recovery, tentative hiking → neutral to lean hawk
+  2011-13: post-GFC softening, commodity bust, cutting → dove
+  2014-18: "wait and see" extended hold at 1.5-2.5% → neutral/lean dove
+  2019-20: three pre-COVID cuts, COVID emergency cuts to 0.10% → deep dove
+  2021: YCC/QE era, "not before 2024" forward guidance → deepest dove
+  2022: shock hawkish u-turn, front-loaded 300bp → extreme hawk
+  2022-23: tightening slows, peak at 4.35% → moderating hawk
+  2024: long hold, pivot toward dovish → lean dove
+  2025: three-cut easing cycle then hawkish re-pivot → dove → hawk
+  2026: re-tightening, three hikes → hawk
+*/
+const sentData = [["Jan 2000",3,5.0],["Feb 2000",4,5.25],["Mar 2000",5,5.5],["Apr 2000",5,5.5],["May 2000",5,5.75],["Jun 2000",5,5.75],["Jul 2000",6,5.75],["Aug 2000",6,6.0],["Sep 2000",5,6.0],["Oct 2000",5,6.25],["Nov 2000",4,6.25],["Dec 2000",3,6.25],["Jan 2001",2,6.25],["Feb 2001",-1,6.0],["Mar 2001",-2,5.75],["Apr 2001",-3,5.5],["May 2001",-4,5.0],["Jun 2001",-5,5.0],["Jul 2001",-5,4.5],["Aug 2001",-5,4.5],["Sep 2001",-6,4.25],["Oct 2001",-6,4.25],["Nov 2001",-5,4.25],["Dec 2001",-4,4.25],["Jan 2002",-2,4.25],["Feb 2002",-1,4.25],["Mar 2002",0,4.25],["Apr 2002",1,4.25],["May 2002",2,4.25],["Jun 2002",2,4.5],["Jul 2002",3,4.5],["Aug 2002",3,4.5],["Sep 2002",3,4.5],["Oct 2002",3,4.5],["Nov 2002",3,4.75],["Dec 2002",2,4.75],["Jan 2003",1,4.75],["Feb 2003",1,4.75],["Mar 2003",1,4.75],["Apr 2003",1,4.75],["May 2003",2,4.75],["Jun 2003",2,4.75],["Jul 2003",3,4.75],["Aug 2003",3,4.75],["Sep 2003",3,4.75],["Oct 2003",4,4.75],["Nov 2003",4,5.0],["Dec 2003",4,5.25],["Jan 2004",3,5.25],["Feb 2004",3,5.25],["Mar 2004",3,5.25],["Apr 2004",3,5.25],["May 2004",3,5.25],["Jun 2004",3,5.25],["Jul 2004",3,5.25],["Aug 2004",3,5.25],["Sep 2004",3,5.25],["Oct 2004",3,5.25],["Nov 2004",3,5.25],["Dec 2004",3,5.25],["Jan 2005",3,5.25],["Feb 2005",3,5.25],["Mar 2005",3,5.5],["Apr 2005",3,5.5],["May 2005",4,5.5],["Jun 2005",4,5.5],["Jul 2005",4,5.5],["Aug 2005",4,5.5],["Sep 2005",4,5.5],["Oct 2005",4,5.5],["Nov 2005",4,5.5],["Dec 2005",4,5.5],["Jan 2006",4,5.5],["Feb 2006",4,5.5],["Mar 2006",5,5.5],["Apr 2006",5,5.5],["May 2006",5,5.75],["Jun 2006",5,5.75],["Jul 2006",5,5.75],["Aug 2006",5,6.0],["Sep 2006",5,6.0],["Oct 2006",5,6.0],["Nov 2006",5,6.25],["Dec 2006",5,6.25],["Jan 2007",5,6.25],["Feb 2007",6,6.5],["Mar 2007",6,6.5],["Apr 2007",6,6.5],["May 2007",6,6.5],["Jun 2007",6,6.5],["Jul 2007",7,6.5],["Aug 2007",6,6.75],["Sep 2007",5,6.75],["Oct 2007",5,6.75],["Nov 2007",5,6.75],["Dec 2007",4,6.75],["Jan 2008",5,6.75],["Feb 2008",6,7.0],["Mar 2008",6,7.25],["Apr 2008",6,7.25],["May 2008",6,7.25],["Jun 2008",5,7.25],["Jul 2008",3,7.25],["Aug 2008",1,7.25],["Sep 2008",-2,7.0],["Oct 2008",-5,6.0],["Nov 2008",-7,5.25],["Dec 2008",-8,4.25],["Jan 2009",-8,4.25],["Feb 2009",-8,3.25],["Mar 2009",-8,3.0],["Apr 2009",-7,3.0],["May 2009",-6,3.0],["Jun 2009",-5,3.0],["Jul 2009",-4,3.0],["Aug 2009",-3,3.0],["Sep 2009",-2,3.0],["Oct 2009",0,3.25],["Nov 2009",1,3.5],["Dec 2009",2,3.75],["Jan 2010",2,3.75],["Feb 2010",2,3.75],["Mar 2010",3,4.0],["Apr 2010",3,4.25],["May 2010",4,4.5],["Jun 2010",4,4.5],["Jul 2010",4,4.5],["Aug 2010",4,4.5],["Sep 2010",4,4.5],["Oct 2010",4,4.5],["Nov 2010",4,4.75],["Dec 2010",3,4.75],["Jan 2011",3,4.75],["Feb 2011",3,4.75],["Mar 2011",3,4.75],["Apr 2011",3,4.75],["May 2011",3,4.75],["Jun 2011",2,4.75],["Jul 2011",2,4.75],["Aug 2011",1,4.75],["Sep 2011",0,4.75],["Oct 2011",-1,4.75],["Nov 2011",-2,4.5],["Dec 2011",-3,4.25],["Jan 2012",-3,4.25],["Feb 2012",-3,4.25],["Mar 2012",-3,4.25],["Apr 2012",-3,4.25],["May 2012",-4,3.75],["Jun 2012",-4,3.5],["Jul 2012",-4,3.5],["Aug 2012",-4,3.5],["Sep 2012",-4,3.5],["Oct 2012",-5,3.25],["Nov 2012",-5,3.25],["Dec 2012",-4,3.0],["Jan 2013",-4,3.0],["Feb 2013",-4,3.0],["Mar 2013",-4,3.0],["Apr 2013",-4,3.0],["May 2013",-4,2.75],["Jun 2013",-4,2.75],["Jul 2013",-4,2.75],["Aug 2013",-5,2.5],["Sep 2013",-4,2.5],["Oct 2013",-3,2.5],["Nov 2013",-3,2.5],["Dec 2013",-2,2.5],["Jan 2014",-2,2.5],["Feb 2014",-2,2.5],["Mar 2014",-2,2.5],["Apr 2014",-2,2.5],["May 2014",-2,2.5],["Jun 2014",-2,2.5],["Jul 2014",-2,2.5],["Aug 2014",-2,2.5],["Sep 2014",-2,2.5],["Oct 2014",-2,2.5],["Nov 2014",-2,2.5],["Dec 2014",-2,2.5],["Jan 2015",-3,2.5],["Feb 2015",-3,2.25],["Mar 2015",-3,2.25],["Apr 2015",-3,2.25],["May 2015",-4,2.0],["Jun 2015",-4,2.0],["Jul 2015",-4,2.0],["Aug 2015",-4,2.0],["Sep 2015",-3,2.0],["Oct 2015",-3,2.0],["Nov 2015",-3,2.0],["Dec 2015",-3,2.0],["Jan 2016",-3,2.0],["Feb 2016",-3,2.0],["Mar 2016",-3,2.0],["Apr 2016",-4,2.0],["May 2016",-4,1.75],["Jun 2016",-4,1.75],["Jul 2016",-4,1.75],["Aug 2016",-5,1.5],["Sep 2016",-5,1.5],["Oct 2016",-4,1.5],["Nov 2016",-4,1.5],["Dec 2016",-3,1.5],["Jan 2017",-2,1.5],["Feb 2017",-2,1.5],["Mar 2017",-2,1.5],["Apr 2017",-2,1.5],["May 2017",-2,1.5],["Jun 2017",-2,1.5],["Jul 2017",-2,1.5],["Aug 2017",-2,1.5],["Sep 2017",-2,1.5],["Oct 2017",-2,1.5],["Nov 2017",-2,1.5],["Dec 2017",-1,1.5],["Jan 2018",-1,1.5],["Feb 2018",-1,1.5],["Mar 2018",-1,1.5],["Apr 2018",-1,1.5],["May 2018",-1,1.5],["Jun 2018",-1,1.5],["Jul 2018",-1,1.5],["Aug 2018",-1,1.5],["Sep 2018",-1,1.5],["Oct 2018",-1,1.5],["Nov 2018",0,1.5],["Dec 2018",0,1.5],["Jan 2019",0,1.5],["Feb 2019",-1,1.5],["Mar 2019",-1,1.5],["Apr 2019",-2,1.5],["May 2019",-3,1.5],["Jun 2019",-4,1.25],["Jul 2019",-5,1.0],["Aug 2019",-5,1.0],["Sep 2019",-5,1.0],["Oct 2019",-5,0.75],["Nov 2019",-5,0.75],["Dec 2019",-4,0.75],["Jan 2020",-4,0.75],["Feb 2020",-4,0.75],["Mar 2020",-8,0.25],["Apr 2020",-9,0.25],["May 2020",-9,0.25],["Jun 2020",-9,0.25],["Jul 2020",-9,0.25],["Aug 2020",-9,0.25],["Sep 2020",-9,0.25],["Oct 2020",-9,0.25],["Nov 2020",-9,0.1],["Dec 2020",-9,0.1],["Jan 2021",-9,0.1],["Feb 2021",-9,0.1],["Mar 2021",-9,0.1],["Apr 2021",-9,0.1],["May 2021",-8,0.1],["Jun 2021",-8,0.1],["Jul 2021",-8,0.1],["Aug 2021",-8,0.1],["Sep 2021",-7,0.1],["Oct 2021",-6,0.1],["Nov 2021",-6,0.1],["Dec 2021",-5,0.1],["Jan 2022",-4,0.1],["Feb 2022",-4,0.1],["Mar 2022",-3,0.1],["Apr 2022",-1,0.1],["May 2022",4,0.35],["Jun 2022",7,0.85],["Jul 2022",8,1.35],["Aug 2022",9,1.85],["Sep 2022",9,2.35],["Oct 2022",8,2.6],["Nov 2022",8,2.85],["Dec 2022",7,3.1],["Jan 2023",7,3.1],["Feb 2023",7,3.35],["Mar 2023",6,3.6],["Apr 2023",6,3.6],["May 2023",7,3.85],["Jun 2023",6,4.1],["Jul 2023",4,4.1],["Aug 2023",4,4.1],["Sep 2023",4,4.1],["Oct 2023",5,4.1],["Nov 2023",6,4.35],["Dec 2023",4,4.35],["Jan 2024",3,4.35],["Feb 2024",3,4.35],["Mar 2024",1,4.35],["Apr 2024",1,4.35],["May 2024",2,4.35],["Jun 2024",2,4.35],["Jul 2024",3,4.35],["Aug 2024",3,4.35],["Sep 2024",2,4.35],["Oct 2024",2,4.35],["Nov 2024",2,4.35],["Dec 2024",5,4.35],["Jan 2025",5,4.35],["Feb 2025",-1,4.1],["Mar 2025",-2,4.1],["Apr 2025",-3,4.1],["May 2025",-3,3.85],["Jun 2025",-2,3.85],["Jul 2025",-2,3.85],["Aug 2025",-1,3.6],["Sep 2025",-1,3.6],["Oct 2025",4,3.6],["Nov 2025",5,3.6],["Dec 2025",6,3.6],["Jan 2026",7,3.6],["Feb 2026",8,3.85],["Mar 2026",7,4.1],["Apr 2026",7,4.1],["May 2026",7,4.35],["Jun 2026",6.4,4.35],["Jul 2026",6.0,4.35],["Aug 2026",5.5,4.35],["Sep 2026",5.5,4.35]];
+const pivots = [{"idx": 7, "txt": "6.25% peak", "above": true}, {"idx": 20, "txt": "6 cuts \u2192 4.25%", "above": false}, {"idx": 98, "txt": "GFC peak 7.25%", "above": true}, {"idx": 106, "txt": "GFC emergency cuts", "above": false}, {"idx": 242, "txt": "COVID: 0.10%", "above": false}, {"idx": 268, "txt": "First 2022 hike", "above": true}, {"idx": 271, "txt": "Peak hawk +9", "above": true}, {"idx": 290, "txt": "Dovish tilt", "above": false}, {"idx": 301, "txt": "Easing cycle", "above": false}, {"idx": 309, "txt": "Hawkish re-pivot", "above": true}, {"idx": 313, "txt": "Unanimous hike", "above": true}];
+
+const sCtx = document.getElementById('sentChart').getContext('2d');
+try{ new Chart(sCtx, {
+  type:'line',
+  data:{
+    labels: sentData.map(d=>d[0]),
+    datasets:[
+      {
+        label:'Sentiment score',
+        data: sentData.map(d=>d[1]),
+        yAxisID:'ySent',
+        borderColor:'#13283F',
+        borderWidth:2.5,
+        tension:0.32,
+        fill:{target:{value:0}, above:'rgba(168,67,31,0.13)', below:'rgba(62,107,79,0.13)'},
+        pointRadius: sentData.map((_,i)=> pivots.find(p=>p.idx===i)?5:0),
+        pointBackgroundColor: sentData.map((d,i)=> d[1]>=0?'#A8431F':'#3E6B4F'),
+        pointBorderColor:'#fff', pointBorderWidth:2,
+        order:1,
+      },
+      {
+        label:'Cash rate %',
+        data: sentData.map(d=>d[2]),
+        yAxisID:'yRate',
+        borderColor:'#B8860B',
+        borderWidth:1.5,
+        borderDash:[4,3],
+        tension:0,
+        fill:false,
+        pointRadius:0,
+        order:2,
+      }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{
+        display:true, position:'top', align:'end',
+        labels:{font:{family:'IBM Plex Mono',size:11},color:'#4C5E72',boxWidth:22,padding:14,usePointStyle:true}
+      },
+      tooltip:{
+        backgroundColor:'#13283F',
+        titleFont:{family:'IBM Plex Mono',size:12},
+        bodyFont:{family:'IBM Plex Mono',size:12},
+        padding:10,
+        callbacks:{
+          label: item => item.datasetIndex===0
+            ? ' Sentiment: '+(item.parsed.y>=0?'+':'')+item.parsed.y
+            : ' Cash rate: '+item.parsed.y.toFixed(2)+'%'
+        }
+      }
+    },
+    scales:{
+      x:{
+        ticks:{
+          font:{family:'IBM Plex Mono',size:10}, color:'#4C5E72',
+          maxRotation:0, autoSkip:true, maxTicksLimit:14,
+          callback:function(v,i){
+            const lbl=this.getLabelForValue(v);
+            return lbl&&lbl.startsWith('Jan')?lbl.slice(4):'';
+          }
+        },
+        grid:{display:false}
+      },
+      ySent:{
+        type:'linear', position:'left', min:-10, max:10,
+        ticks:{font:{family:'IBM Plex Mono',size:11},color:'#4C5E72',stepSize:2,callback:v=>(v>0?'+':'')+v},
+        grid:{color:'rgba(19,40,63,0.06)'},
+        title:{display:true,text:'Sentiment (−10 dove / +10 hawk)',font:{family:'IBM Plex Mono',size:10},color:'#4C5E72'}
+      },
+      yRate:{
+        type:'linear', position:'right', min:0, max:8,
+        ticks:{font:{family:'IBM Plex Mono',size:11},color:'#B8860B',callback:v=>v.toFixed(1)+'%'},
+        grid:{display:false},
+        title:{display:true,text:'Cash rate %',font:{family:'IBM Plex Mono',size:10},color:'#B8860B'}
+      }
+    }
+  },
+  plugins:[{
+    id:'pivotLabels',
+    afterDraw(chart){
+      const ctx=chart.ctx, meta=chart.getDatasetMeta(0);
+      ctx.save();
+      ctx.font='10px "IBM Plex Mono",monospace';
+      ctx.textAlign='center';
+      pivots.forEach(p=>{
+        const pt=meta.data[p.idx];
+        if(!pt) return;
+        ctx.fillStyle = sentData[p.idx][1]>=0?'#A8431F':'#3E6B4F';
+        ctx.fillText(p.txt, pt.x, p.above ? pt.y-13 : pt.y+20);
+      });
+      ctx.restore();
+    }
+  }]
+}); }catch(e){ console.warn('sentiment chart unavailable:', e); }
+
+/* ---------- board sentiment ---------- */
+const members = [{"name": "Michele Bullock", "role": "Governor & Chair", "weight": 2.0, "badge": "H", "badgeLabel": "Hawkish", "score": 6, "view": "Told the Anika Foundation the Board was prepared to act as required, warning that deferring tight policy can mean higher rates and higher unemployment later. After the August hold, said the Board is not ruling out further rises if inflation looks like staying above target for longer than forecast.", "src": "Anika Foundation speech, 28 Jul 2026 \u00b7 Media conference, 11 Aug 2026"}, {"name": "Andrew Hauser", "role": "Deputy Governor", "weight": 1.5, "badge": "H2", "badgeLabel": "Lean Hawk", "score": 4, "view": "Backed the unanimous August hold. Has consistently framed risks to inflation as skewed to the upside while acknowledging the economy is slowing broadly as anticipated.", "src": "Voted with unanimous Aug decision"}, {"name": "Jenny Wilkinson PSM", "role": "Sec. to the Treasury", "weight": 1.0, "badge": "N", "badgeLabel": "Neutral", "score": 0, "view": "Represents the fiscal authority's perspective. No independent public statements on policy direction. Voted with the unanimous August decision.", "src": "No independent public signal"}, {"name": "Carolyn Hewson AO", "role": "External member", "weight": 1.0, "badge": "H2", "badgeLabel": "Lean Hawk", "score": 4, "view": "Emphasised the practical application of economic thinking and the value of business liaison over models alone. Tone consistent with the hawkish majority; no explicit rate call.", "src": "Adelaide Uni Fisher Lecture, 27 May 2026"}, {"name": "Bruce Preston", "role": "External member (from Mar 2026)", "weight": 1.0, "badge": "N", "badgeLabel": "Neutral / Unknown", "score": 1, "view": "UNSW macroeconomist, former senior RBA and Treasury adviser. No public speeches yet. Voted with the majority to hike in May and with the unanimous August hold.", "src": "Appointment release, 16 Feb 2026"}, {"name": "Ren\u00e9e Fry-McKibbin", "role": "External member", "weight": 1.0, "badge": "UK", "badgeLabel": "Unknown", "score": 0, "view": "ANU academic economist. Backed lower rates on the ANU shadow board in early 2022, historically a dovish signal. No speeches yet under the transparency framework.", "src": "No 2026 public signal"}, {"name": "Iain Ross AO", "role": "External member", "weight": 1.0, "badge": "UK", "badgeLabel": "Unknown", "score": 0, "view": "Former Fair Work Commission President; brings a labour market lens. No speeches yet under the transparency framework. Unemployment at 4.1% and forecast to drift higher.", "src": "No 2026 public signal"}, {"name": "Marnie Baker AM", "role": "External member", "weight": 1.0, "badge": "UK", "badgeLabel": "Unknown", "score": 0, "view": "Former Bendigo & Adelaide Bank CEO; financial sector perspective. No public statements on policy direction under the transparency framework.", "src": "No 2026 public signal"}, {"name": "Vacant (Harper seat)", "role": "External member \u2014 seat open", "weight": 0.0, "badge": "UK", "badgeLabel": "Vacant", "score": 0, "view": "Ian Harper AO's term ended with the August 2026 meeting, which Bullock confirmed was his last. Successor not reflected here \u2014 update this entry when the appointment is announced.", "src": "Media conference, 11 Aug 2026"}];
+
+const badgeColors = {H:'#A8431F',H2:'#8B4513',N:'#5A6B7E',D:'#3E6B4F',UK:'#888'};
+const badgeBg     = {H:'var(--hike-bg)',H2:'#FAEBD7',N:'var(--hold-bg)',D:'var(--cut-bg)',UK:'#F0F0F0'};
+
+document.getElementById('memberCards').innerHTML = members.map(m=>`
+  <div class="member">
+    <div class="member-top">
+      <div>
+        <div class="nm">${m.name}</div>
+        <div class="rl">${m.role}</div>
+      </div>
+      <span class="hawk-badge ${m.badge}">${m.badgeLabel}</span>
+    </div>
+    <div class="view">${m.view}</div>
+    <div class="src">${m.src}</div>
+  </div>`).join('');
+
+/* compute weighted composite */
+const totalWeight = members.reduce((s,m)=>s+m.weight,0);
+const weightedScore = members.reduce((s,m)=>s+m.score*m.weight,0)/totalWeight;
+const ws = weightedScore.toFixed(1);
+document.getElementById('scoreNum').textContent = (weightedScore>=0?'+':'')+ws;
+document.getElementById('scoreNum').style.color = weightedScore>2?'var(--hike)':weightedScore<-2?'var(--cut)':'var(--ink-soft)';
+document.getElementById('scoreLabel').textContent = weightedScore>=6?'Hawkish':weightedScore>=2?'Lean Hawkish':weightedScore<=-6?'Dovish':weightedScore<=-2?'Lean Dovish':'Neutral';
+
+/* needle: map -10..+10 to 0..100% */
+const needlePct = (weightedScore+10)/20*100;
+document.getElementById('scoreNeedle').style.left = needlePct+'%';
+
+/* distribution */
+const cats = [{l:'Hawkish',codes:['H'],col:'var(--hike)'},{l:'Lean Hawk',codes:['H2'],col:'#CD853F'},{l:'Neutral / Unknown',codes:['N','UK'],col:'var(--hold)'},{l:'Dovish',codes:['D'],col:'var(--cut)'}];
+document.getElementById('scoreDist').innerHTML = cats.map(c=>{
+  const n=members.filter(m=>c.codes.includes(m.badge)).length;
+  return n?`<div class="sd-item"><div class="sd-dot" style="background:${c.col}"></div>${n}\u00a0${c.l}</div>`:'';
+}).join('');
+</script>
+</body>
+</html>

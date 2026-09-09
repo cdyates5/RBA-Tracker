@@ -1,0 +1,140 @@
+{
+  "_comment": "EDIT THIS FILE after each RBA meeting. rebuild.py reads it and regenerates index.html. Everything here is editorial judgement or data with no free API - it cannot be fetched automatically. The 'editorial_as_of' date below is printed on the dashboard and ages visibly, so stale commentary is obvious rather than silent.",
+
+  "editorial_as_of": "2026-08-11",
+
+  "last_decision": {
+    "date": "11 Aug 2026",
+    "action": "hold",
+    "change_bp": 0,
+    "rate": 4.35,
+    "vote": "unanimous",
+    "note": "second consecutive hold"
+  },
+
+  "setup_blurb": {
+    "headline": "The setup:",
+    "text": "Board held unanimously in August with the hike bias explicitly retained. June-quarter CPI undershot at 3.8% headline / 3.6% trimmed mean, which shifted consensus firmly to a hold. Bullock says the Board is not ruling out further rises if inflation looks like staying above target for longer than forecast.",
+    "secondary": "CBA expects on hold through 2026. Fuel excise roll-off is expected to lift September-quarter headline inflation."
+  },
+
+  "indicators": [
+    {
+      "label": "Headline CPI (Jun qtr, y/y)",
+      "value": "3.8%",
+      "warn": true,
+      "context": "vs 2-3% target band &middot; peaked in Jun qtr per Aug SoMP"
+    },
+    {
+      "label": "Trimmed mean (Jun qtr, y/y)",
+      "value": "3.6%",
+      "warn": true,
+      "context": "little changed from Mar qtr &middot; back to target early 2027"
+    },
+    {
+      "label": "Unemployment rate",
+      "value": "4.1%",
+      "warn": false,
+      "context": "RBA f/c rising to 4.8% by end-2028"
+    },
+    {
+      "label": "AUD / USD",
+      "value": "{{AUDUSD_LIVE}}",
+      "warn": false,
+      "context": "fetched live &middot; {{FX_SOURCE}}"
+    }
+  ],
+
+  "meetings": [
+    { "date": "2\u20133 Feb",   "somp": true,  "outcome": "+25 bp \u2192 3.85%", "cls": "hike",    "desc": "First hike since Nov 2023; unanimous", "votes": null },
+    { "date": "16\u201317 Mar", "somp": false, "outcome": "+25 bp \u2192 4.10%", "cls": "hike",    "desc": "Fuel shock cited; dissenters held in a hawkish sense", "votes": [5, 4] },
+    { "date": "4\u20135 May",   "somp": true,  "outcome": "+25 bp \u2192 4.35%", "cls": "hike",    "desc": "\u201CScope to pause\u201D signalled", "votes": [8, 1] },
+    { "date": "15\u201316 Jun", "somp": false, "outcome": "Hold 4.35%",          "cls": "hold",    "desc": "Pause begins after three hikes", "votes": null },
+    { "date": "10\u201311 Aug", "somp": true,  "outcome": "Hold 4.35%",          "cls": "hold",    "desc": "Unanimous; hike bias retained; Harper's last meeting", "votes": [9, 0] },
+    { "date": "28\u201329 Sep", "somp": false, "outcome": "Pending",             "cls": "pending", "desc": "Live \u2014 Sep qtr CPI not yet in hand", "votes": null, "next": true },
+    { "date": "2\u20133 Nov",   "somp": true,  "outcome": "\u2014",              "cls": "pending", "desc": "SoMP meeting; full forecast round", "votes": null },
+    { "date": "7\u20138 Dec",   "somp": false, "outcome": "\u2014",              "cls": "pending", "desc": "Final meeting of 2026", "votes": null }
+  ],
+
+  "banks": [
+    { "name": "ANZ",     "rate": 4.35, "call": "On hold through 2026" },
+    { "name": "CBA",     "rate": 4.35, "call": "On hold through 2026" },
+    { "name": "NAB",     "rate": 4.35, "call": "Hold; hike risk if CPI turns" },
+    { "name": "Westpac", "rate": 4.35, "call": "Hold; earlier hike calls dropped" }
+  ],
+  "bank_scale": { "lo": 4.0, "hi": 5.0 },
+
+  "pricing_rows": [
+    { "meeting": "29 Sep 2026", "implied": "~4.35%", "cum": "\u00b10 bp",  "dir": "flat", "bar": 10, "note": "Hold strongly priced", "next": true },
+    { "meeting": "3 Nov 2026",  "implied": "~4.35%", "cum": "\u00b10 bp",  "dir": "flat", "bar": 12, "note": "Hold priced; SoMP forecast round is the swing factor" },
+    { "meeting": "8 Dec 2026",  "implied": "~4.37%", "cum": "+2 bp",       "dir": "up",   "bar": 16, "note": "Small residual hike risk into year end" },
+    { "meeting": "Feb 2027*",   "implied": "~4.40%", "cum": "+5 bp",       "dir": "up",   "bar": 22, "note": "Curve broadly flat; no cuts priced" },
+    { "meeting": "Mid 2027*",   "implied": "~4.30%", "cum": "-5 bp",       "dir": "flat", "bar": 14, "note": "First tentative easing priced as CPI returns to band" }
+  ],
+  "pricing_note": "Indicative reconstruction of the ASX 30-day interbank futures curve as at the editorial date below. There is no free API for this series, so these figures are entered by hand and do not auto-update \u2014 refresh them from the ASX RBA Rate Tracker before relying on them. *2027 meeting dates not yet published. Futures reference AONIA, which can trade marginally off the target.",
+
+  "members": [
+    {
+      "name": "Michele Bullock", "role": "Governor & Chair", "weight": 2.0,
+      "badge": "H", "badgeLabel": "Hawkish", "score": 6,
+      "view": "Told the Anika Foundation the Board was prepared to act as required, warning that deferring tight policy can mean higher rates and higher unemployment later. After the August hold, said the Board is not ruling out further rises if inflation looks like staying above target for longer than forecast.",
+      "src": "Anika Foundation speech, 28 Jul 2026 \u00b7 Media conference, 11 Aug 2026"
+    },
+    {
+      "name": "Andrew Hauser", "role": "Deputy Governor", "weight": 1.5,
+      "badge": "H2", "badgeLabel": "Lean Hawk", "score": 4,
+      "view": "Backed the unanimous August hold. Has consistently framed risks to inflation as skewed to the upside while acknowledging the economy is slowing broadly as anticipated.",
+      "src": "Voted with unanimous Aug decision"
+    },
+    {
+      "name": "Jenny Wilkinson PSM", "role": "Sec. to the Treasury", "weight": 1.0,
+      "badge": "N", "badgeLabel": "Neutral", "score": 0,
+      "view": "Represents the fiscal authority's perspective. No independent public statements on policy direction. Voted with the unanimous August decision.",
+      "src": "No independent public signal"
+    },
+    {
+      "name": "Carolyn Hewson AO", "role": "External member", "weight": 1.0,
+      "badge": "H2", "badgeLabel": "Lean Hawk", "score": 4,
+      "view": "Emphasised the practical application of economic thinking and the value of business liaison over models alone. Tone consistent with the hawkish majority; no explicit rate call.",
+      "src": "Adelaide Uni Fisher Lecture, 27 May 2026"
+    },
+    {
+      "name": "Bruce Preston", "role": "External member (from Mar 2026)", "weight": 1.0,
+      "badge": "N", "badgeLabel": "Neutral / Unknown", "score": 1,
+      "view": "UNSW macroeconomist, former senior RBA and Treasury adviser. No public speeches yet. Voted with the majority to hike in May and with the unanimous August hold.",
+      "src": "Appointment release, 16 Feb 2026"
+    },
+    {
+      "name": "Ren\u00e9e Fry-McKibbin", "role": "External member", "weight": 1.0,
+      "badge": "UK", "badgeLabel": "Unknown", "score": 0,
+      "view": "ANU academic economist. Backed lower rates on the ANU shadow board in early 2022, historically a dovish signal. No speeches yet under the transparency framework.",
+      "src": "No 2026 public signal"
+    },
+    {
+      "name": "Iain Ross AO", "role": "External member", "weight": 1.0,
+      "badge": "UK", "badgeLabel": "Unknown", "score": 0,
+      "view": "Former Fair Work Commission President; brings a labour market lens. No speeches yet under the transparency framework. Unemployment at 4.1% and forecast to drift higher.",
+      "src": "No 2026 public signal"
+    },
+    {
+      "name": "Marnie Baker AM", "role": "External member", "weight": 1.0,
+      "badge": "UK", "badgeLabel": "Unknown", "score": 0,
+      "view": "Former Bendigo & Adelaide Bank CEO; financial sector perspective. No public statements on policy direction under the transparency framework.",
+      "src": "No 2026 public signal"
+    },
+    {
+      "name": "Vacant (Harper seat)", "role": "External member \u2014 seat open", "weight": 0.0,
+      "badge": "UK", "badgeLabel": "Vacant", "score": 0,
+      "view": "Ian Harper AO's term ended with the August 2026 meeting, which Bullock confirmed was his last. Successor not reflected here \u2014 update this entry when the appointment is announced.",
+      "src": "Media conference, 11 Aug 2026"
+    }
+  ],
+
+  "sentiment_recent": [
+    ["Jul 2026", 6.0],
+    ["Aug 2026", 5.5],
+    ["Sep 2026", 5.5]
+  ],
+
+  "footer_sources": "Cash rate and rate path fetched live from RBA statistical table F1.1. AUD/USD fetched live. Meeting outcomes, board member views, sentiment scores, market pricing and bank forecasts are editorial and maintained by hand \u2014 see the as-of date above the board section."
+}
